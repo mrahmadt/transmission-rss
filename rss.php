@@ -132,7 +132,7 @@ class Transmission
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
         $items = array();
-        foreach ($rss as $link) {
+        foreach ($rss as $rssindex=>$link) {
             curl_setopt($ch, CURLOPT_URL, $link);
             $content = curl_exec($ch);
             if (!$content) continue;
@@ -153,7 +153,8 @@ class Transmission
                 $items[] = array(
                     'title' => $item->getElementsByTagName('title')->item(0)->nodeValue,
                     'link' => $link,
-                    'guid' => $guid
+                    'guid' => $guid,
+                    'rssindex'=> $rssindex
                 );
             }
         }
@@ -173,6 +174,13 @@ $rss = array(
     'http://hdwing.com/rss.php?..........',
     'http://hdtime.org/torrentrss.php?...'
 );
+
+$options = array(
+    0 => array('download-dir'=>'/shares/media/Downloads/new_tv/'),
+    1 => array('download-dir'=>'/shares/media/Downloads/new_tv/'),
+    2 => array('download-dir'=>'/shares/media/Downloads/new_tv/')
+);
+
 $server = 'http://127.0.0.1';
 $port = 9091;
 $rpcPath = '/transmission/rpc';
@@ -190,8 +198,9 @@ foreach ($torrents as $torrent) {
         printf("%s: skip add: %s\n", date('Y-m-d H:i:s'), $torrent['title']);
         continue;
     }
-
-    $response = json_decode($trans->add($torrent['link']));
+    $torrentOptions = array();
+    if(isset($options[$torrent['rssindex']])) { $torrentOptions = $options[$torrent['rssindex']]; }
+    $response = json_decode($trans->add($torrent['link'],false,$torrentOptions));
     if ($response->result == 'success') {
         file_put_contents($lock_file, '1');
         printf("%s: success add: %s\n", date('Y-m-d H:i:s'), $torrent['title']);
