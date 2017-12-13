@@ -130,11 +130,15 @@ class Transmission
         curl_setopt($ch, CURLOPT_TIMEOUT, 20);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+		curl_setopt($ch, CURLOPT_USERAGENT,'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:21.0) Gecko/20100101 Firefox/21.0');
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'));
 
         $items = array();
         foreach ($rss as $rssindex=>$link) {
             curl_setopt($ch, CURLOPT_URL, $link);
             $content = curl_exec($ch);
+            $info = curl_getinfo($ch);
+			if ($info['http_code']<200 || $info['http_code'] >=400) continue;
             if (!$content) continue;
 
             $xml = new DOMDocument();
@@ -146,10 +150,12 @@ class Transmission
                         $item->getElementsByTagName('enclosure')->item(0)->getAttribute('url') :
                         $item->getElementsByTagName('link')->item(0)->nodeValue;
 
-                $guid = $item->getElementsByTagName('guid')->item(0) != null ?
+                /*$guid = $item->getElementsByTagName('guid')->item(0) != null ?
                     $item->getElementsByTagName('guid')->item(0)->nodeValue:
-                    md5($link);
+                    md5($link);*/
 
+				$guid = md5($link);
+                
                 $items[] = array(
                     'title' => $item->getElementsByTagName('title')->item(0)->nodeValue,
                     'link' => $link,
